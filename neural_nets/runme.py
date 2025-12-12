@@ -6,7 +6,7 @@ if __name__ == "__main__":
         "random_seed": 42,
         "minibatch_size": 5,
         "input_file": 'mnist_subset.json',
-        "num_epoch": 3,
+        "num_epoch": 5,
         "dropout_rate": 0.0,
         "alpha": 0.0,
         "activation": "relu",

@@ -1,0 +1,5 @@
+train_acc_record: [np.float64(0.815), np.float64(0.9044), np.float64(0.8844)]
+val_acc_record: [np.float64(0.83), np.float64(0.89), np.float64(0.876)]
+Number of epochs: 3
+First train acc: 0.815
+Last train acc: 0.8844

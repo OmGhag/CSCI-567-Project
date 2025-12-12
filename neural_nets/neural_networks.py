@@ -68,7 +68,7 @@ class linear_layer:
         ################################################################################
         # TODO: Implement the linear forward pass. Store the result in forward_output  #
         ################################################################################
-        forward_output = np.dot(X, self.params['W']) + self.params['b']
+        forward_output = X @ self.params['W'] + self.params['b']
         
 
         return forward_output
@@ -97,9 +97,11 @@ class linear_layer:
         #   - backward_output (N-by-input_D numpy array, the gradient of the mini-batch loss w.r.t. X)
         # only return backward_output, but need to compute self.gradient['W'] and self.gradient['b']
         #################################################################################################
-        self.gradient['W'] = np.dot(X.T, grad)
+        self.gradient['W'] = X.T @ grad
         self.gradient['b'] = np.sum(grad, axis=0, keepdims=True)
+        backward_output = grad @ self.params['W'].T
 
+        
 
         return backward_output
 
@@ -134,7 +136,9 @@ class relu:
         ################################################################################
         # TODO: Implement the relu forward pass. Store the result in forward_output    #
         ################################################################################
+        self.mask = (X > 0).astype(float)  
         forward_output = np.maximum(0, X)
+    
         
 
         return forward_output
@@ -157,7 +161,7 @@ class relu:
         # TODO: Implement the backward pass
         # You can use the mask created in the forward step.
         ####################################################################################################
-
+        backward_output = grad * self.mask
 
         return backward_output
 
@@ -179,6 +183,8 @@ class tanh:
         # TODO: Implement the tanh forward pass. Store the result in forward_output
         # You can use np.tanh()
         ################################################################################
+        forward_output = np.tanh(X)
+        self.output = forward_output
 
         return forward_output
 
@@ -197,6 +203,7 @@ class tanh:
         # TODO: Implement the backward pass
         # Derivative of tanh(z) is (1 - tanh(z)^2)
         ####################################################################################################
+        backward_output = grad * (1 - np.tanh(X) ** 2)
 
 
         return backward_output
@@ -284,7 +291,7 @@ def miniBatchGradientDescent(model, momentum, _alpha, _learning_rate):
                     # TODO: update the model parameter module.params[key] by a step of gradient descent.
                     # Note again that the gradient is stored in g already.
                     ####################################################################################
-
+                    module.params[key] = module.params[key] - _learning_rate * g
 
 
 
@@ -293,7 +300,9 @@ def miniBatchGradientDescent(model, momentum, _alpha, _learning_rate):
                     # TODO: Update the model parameter module.params[key] by a step of gradient descent with momentum.
                     # Access the previous momentum by momentum[module_name + '_' + key], and then update it directly.
                     ###################################################################################################
-
+                    velocity_key = module_name + '_' + key
+                    momentum[velocity_key] = _alpha * momentum[velocity_key] - _learning_rate * g
+                    module.params[key] = module.params[key] + momentum[velocity_key]
 
 
     return model
@@ -398,8 +407,12 @@ def main(main_params):
             # TODO: Call the backward methods of every layer in the model in reverse order.
             # We have given the first and last backward calls (above and below this TODO block).
             ######################################################################################
+            grad_d1 = model['L2'].backward(d1, grad_a2)
+            grad_h1 = model['drop1'].backward(h1, grad_d1)
+            grad_a1 = model['nonlinear1'].backward(a1, grad_h1)
             grad_x = model['L1'].backward(x, grad_a1)
-
+            
+            
             ### gradient_update ###
             model = miniBatchGradientDescent(model, momentum, _alpha, _learning_rate)
 
@@ -445,7 +458,7 @@ def main(main_params):
         val_acc_record.append(val_acc)
 
         print('Validation accuracy at epoch ' + str(t + 1) + ' is ' + str(val_acc))
-
+    
     # save file
     json.dump({'train': train_acc_record, 'val': val_acc_record},
               open('MLP_lr' + str(main_params['learning_rate']) +
